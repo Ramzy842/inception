@@ -1,24 +1,96 @@
-version: '3'
+networks:
+  inception:
+    driver: bridge
 
 services:
   nginx:
     build:
       context: .
       dockerfile: requirements/nginx/Dockerfile
-    #depend_on:
-    # - wordpress
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
     volumes:
       - ./requirements/nginx/conf/:/etc/nginx/http.d/
       - ./requirements/nginx/tools:/etc/nginx/ssl/
-      - /home/rchahban/simple_docker_nginx_html/public/html:/var/www/
-    ports:
-      - "443:443"
+      - wp-volume:/var/www/html
+    networks:
+      - inception
     restart: always
     container_name: nginx
+
   mariadb:
     build: requirements/mariadb/.
     container_name: mariadb
-    ports:
-      - "3306:3306"
+    restart: always
+    networks:
+      - inception
+    env_file: .env
+
+  wordpress:
+    build: requirements/wordpress/.
+    container_name: wordpress
+    depends_on:
+      - mariadb
     restart: always
     env_file: .env
+    volumes:
+      - wp-volume:/var/www/html
+    networks:
+      - inception
+  redis:
+    build:
+      context: .
+      dockerfile: requirements/bonus/redis/Dockerfile
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - inception
+    restart: always
+  adminer:
+    build:
+      context: .
+      dockerfile: requirements/bonus/adminer/Dockerfile
+    container_name: adminer
+    depends_on:
+      - mariadb
+    ports:
+      - "8080:8080"
+    networks:
+      - inception
+    restart: always
+  site:
+    build:
+      context: .
+      dockerfile: requirements/bonus/site/Dockerfile
+    container_name: site
+    ports:
+      - "3000:3000"
+    networks:
+      - inception
+    restart: always
+  portainer:
+    build:
+      context: .
+      dockerfile: requirements/bonus/netdata/Dockerfile
+    container_name: netdata
+    ports:
+      - "9000:19999"
+    restart: always
+    networks:
+      - inception
+volumes:
+    wp-volume:
+      driver: local
+      driver_opts:
+        o: bind
+        type: none
+        device: /home/rchahban/data/wordpress
+    db-volume:
+      driver: local
+      driver_opts:
+        o: bind
+        type: none
+        device: /home/rchahban/data/mariadb
