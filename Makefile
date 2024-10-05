@@ -25,6 +25,7 @@ fclean:
 	@docker network prune --force
 	@docker volume prune --force
 	@sudo rm -rf /home/rchahban/data/*
+	@sudo rm -rf /home/rchahban/data
 
 
 re: fclean all

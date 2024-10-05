@@ -71,13 +71,13 @@ services:
     networks:
       - inception
     restart: always
-  portainer:
+  netdata:
     build:
       context: .
       dockerfile: requirements/bonus/netdata/Dockerfile
     container_name: netdata
     ports:
-      - "9000:19999"
+      - "5000:19999"
     restart: always
     networks:
       - inception
